@@ -179,6 +179,11 @@ def init_db():
         cur = conn.cursor()
         for sql in tables:
             cur.execute(sql)
+        # Simple migrations
+        try:
+            cur.execute("ALTER TABLE listings ADD COLUMN downloads INTEGER DEFAULT 0")
+        except:
+            pass # Column likely already exists
         # Seed admin user
         cur.execute("SELECT id FROM users WHERE email=%s", (ADMIN_EMAIL,))
         if not cur.fetchone():

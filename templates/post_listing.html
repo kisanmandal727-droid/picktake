@@ -1,0 +1,52 @@
+{% extends "base.html" %}
+{% block title %}Create Listing | Pick&Take{% endblock %}
+{% block extra_css %}
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/post_listing.css') }}">
+{% endblock %}
+
+{% block content %}
+<div class="listing-container">
+  <a href="{{ url_for('home') }}" class="back-link"><i class="fa fa-arrow-left"></i> Back</a>
+  <h2>Create a New Listing</h2>
+  <p class="subtitle">Fill out the form below to post your item for sale.</p>
+
+  {% with messages = get_flashed_messages(with_categories=true) %}
+    {% for cat, msg in messages %}
+      <p class="flash-msg flash-{{ cat }}">{{ msg }}</p>
+    {% endfor %}
+  {% endwith %}
+
+  <form method="POST" enctype="multipart/form-data">
+
+    <label>Item Image</label>
+    <input type="file" name="image" accept="image/*">
+
+    <label>PDF File <span style="color:rgba(255,255,255,0.4);font-weight:400;">(optional — for notes, digital books)</span></label>
+    <input type="file" name="pdf" accept=".pdf">
+
+    <label>Title</label>
+    <input type="text" name="title" placeholder="e.g. Advanced Calculus, 3rd Edition" required>
+
+    <div class="row">
+      <div>
+        <label>Category</label>
+        <select name="category">
+          <option value="">Select a category</option>
+          {% for c in categories %}
+            <option value="{{ c }}">{{ c }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div>
+        <label>Price (Rs)</label>
+        <input type="number" name="price" value="0" min="0">
+      </div>
+    </div>
+
+    <label>Description</label>
+    <textarea name="description" rows="4" placeholder="Provide a detailed description of your item..."></textarea>
+
+    <button class="post-btn-submit" type="submit">Post Listing</button>
+  </form>
+</div>
+{% endblock %}

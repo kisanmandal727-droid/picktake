@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{% block title %}Pick&Take{% endblock %}</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/common.css') }}">
+  {% block extra_css %}{% endblock %}
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+</head>
+<body>
+
+<div class="header">
+  <div class="logo"><i class="fa fa-book"></i> Pick&amp;Take</div>
+
+  <button class="hamburger" id="hamburger" onclick="toggleMenu()" aria-label="Menu">
+    <span></span><span></span><span></span>
+  </button>
+
+  <div class="menu" id="navMenu">
+    <a href="{{ url_for('home') }}"><i class="fa fa-house"></i> Home</a>
+    <a href="{{ url_for('profile', tab='saved') }}"><i class="fa fa-heart"></i> Favourite</a>
+    <a href="{{ url_for('chat') }}"><i class="fa fa-comments"></i> Chat</a>
+    <a href="{{ url_for('profile') }}"><i class="fa fa-user"></i> Profile</a>
+    {% if session.get('is_admin') %}
+      <a href="{{ url_for('admin') }}"><i class="fa fa-shield-halved"></i> Admin</a>
+    {% endif %}
+    <a href="{{ url_for('logout') }}"><i class="fa fa-right-from-bracket"></i> Logout</a>
+    <a href="{{ url_for('post_listing') }}" class="post-btn"><i class="fa fa-plus"></i> Post Listing</a>
+  </div>
+</div>
+
+{% with messages = get_flashed_messages(with_categories=true) %}
+  {% if messages %}
+    {% for cat, msg in messages %}
+      <div class="flash flash-{{ cat }}">{{ msg }}</div>
+    {% endfor %}
+  {% endif %}
+{% endwith %}
+
+{% block content %}{% endblock %}
+
+<div class="footer">© 2026 Pick&amp;Take | College Marketplace</div>
+
+<script>
+function toggleMenu() {
+  const menu = document.getElementById("navMenu");
+  const btn  = document.getElementById("hamburger");
+  menu.classList.toggle("open");
+  btn.classList.toggle("open");
+}
+// Close menu when clicking a link
+document.querySelectorAll(".menu a").forEach(a => {
+  a.addEventListener("click", () => {
+    document.getElementById("navMenu").classList.remove("open");
+    document.getElementById("hamburger").classList.remove("open");
+  });
+});
+</script>
+
+{% block extra_js %}{% endblock %}
+</body>
+</html>

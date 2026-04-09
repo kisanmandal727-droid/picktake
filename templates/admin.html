@@ -1,0 +1,165 @@
+{% extends "base.html" %}
+{% block title %}Admin Dashboard | Pick&Take{% endblock %}
+{% block extra_css %}
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/admin.css') }}">
+  <style>
+    .main-content { overflow: hidden; }
+  </style>
+{% endblock %}
+
+{% block content %}
+<div class="admin-container">
+  <div class="admin-header">
+    <h1>Admin Dashboard</h1>
+    <div class="admin-tabs">
+      <a href="{{ url_for('admin', tab='users') }}"
+         class="admin-tab {% if tab=='users' %}active{% endif %}">
+        <i class="fa fa-users"></i> Users ({{ users_list|selectattr('is_admin','eq',0)|list|length }})
+      </a>
+      <a href="{{ url_for('admin', tab='listings') }}"
+         class="admin-tab {% if tab=='listings' %}active{% endif %}">
+        <i class="fa fa-list"></i> Listings ({{ listings_list|length }})
+      </a>
+      <a href="{{ url_for('admin', tab='reports') }}"
+         class="admin-tab {% if tab=='reports' %}active{% endif %}">
+        <i class="fa fa-flag"></i> Reports ({{ reports_list|selectattr('status','eq','pending')|list|length }})
+      </a>
+    </div>
+  </div>
+
+  <div class="admin-panel">
+
+    {% if tab == 'users' %}
+      <h2>All Users</h2>
+      <p class="panel-sub">View and manage all registered users.</p>
+      <table class="admin-table">
+        <thead>
+          <tr><th>User</th><th>Email</th><th>College</th><th>Status</th><th>Actions</th></tr>
+        </thead>
+        <tbody>
+          {% for u in users_list %}{% if not u.is_admin %}
+          <tr class="{% if u.banned %}banned-row{% endif %}">
+            <td>
+              <div class="user-cell">
+                <div class="table-avatar">{{ u.name[0]|upper }}</div>
+                <div>
+                  <strong>{{ u.name }}</strong>
+                  <p>@{{ u.username }}</p>
+                </div>
+              </div>
+            </td>
+            <td>{{ u.email }}</td>
+            <td>{{ u.college or '—' }}</td>
+            <td>
+              <span class="status-badge {% if u.banned %}badge-sold{% else %}badge-available{% endif %}">
+                {{ 'BANNED' if u.banned else 'ACTIVE' }}
+              </span>
+            </td>
+            <td>
+              <form method="POST" action="{{ url_for('admin_ban', user_id=u.id) }}"
+                    onsubmit="return confirm('{{ 'Unban' if u.banned else 'Ban' }} {{ u.name }}?')">
+                <button type="submit"
+                        class="icon-btn {% if u.banned %}btn-unban{% else %}btn-ban{% endif %}"
+                        title="{{ 'Unban' if u.banned else 'Ban' }}">
+                  <i class="fa {% if u.banned %}fa-eye{% else %}fa-eye-slash{% endif %}"></i>
+                </button>
+              </form>
+            </td>
+          </tr>
+          {% endif %}{% endfor %}
+        </tbody>
+      </table>
+
+    {% elif tab == 'listings' %}
+      <h2>All Listings</h2>
+      <p class="panel-sub">View and manage all user-created listings.</p>
+      <table class="admin-table">
+        <thead>
+          <tr><th>Listing</th><th>Seller</th><th>Price</th><th>Status</th><th>Actions</th></tr>
+        </thead>
+        <tbody>
+          {% for l in listings_list %}
+          <tr>
+            <td>
+              <div class="listing-cell">
+                {% if l.image %}
+                  <img src="{{ l.image }}"
+                       onerror="this.style.display='none'" class="listing-thumb">
+                {% else %}
+                  <div class="listing-thumb-placeholder">📦</div>
+                {% endif %}
+                <div>
+                  <strong>{{ l.title }}</strong>
+                  <p>{{ l.category }}</p>
+                </div>
+              </div>
+            </td>
+            <td>{{ l.username }}</td>
+            <td style="color:var(--orange);font-weight:600;">₹{{ l.price }}</td>
+            <td>
+              <span class="status-badge {% if l.sold %}badge-sold{% else %}badge-available{% endif %}">
+                {{ 'SOLD' if l.sold else 'AVAILABLE' }}
+              </span>
+            </td>
+            <td>
+              <form method="POST" action="{{ url_for('admin_delete_listing', listing_id=l.id) }}"
+                    onsubmit="return confirm('Delete {{ l.title }}?')">
+                <button type="submit" class="icon-btn btn-ban" title="Delete">
+                  <i class="fa fa-trash"></i>
+                </button>
+              </form>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+
+    {% elif tab == 'reports' %}
+      <h2>User Reports</h2>
+      <p class="panel-sub">Review content flagged by the community.</p>
+      <table class="admin-table">
+        <thead>
+          <tr><th>Target Item</th><th>Reporter</th><th>Reason</th><th>Status</th><th>Actions</th></tr>
+        </thead>
+        <tbody>
+          {% for r in reports_list %}
+          <tr>
+            <td><strong>{{ r.target_name }}</strong></td>
+            <td>{{ r.reporter }}</td>
+            <td>{{ r.reason }}</td>
+            <td>
+              <span class="status-badge
+                {% if r.status=='resolved' %}badge-available
+                {% elif r.status=='dismissed' %}badge-dismissed
+                {% else %}badge-pending{% endif %}">
+                {{ r.status|upper }}
+              </span>
+            </td>
+            <td>
+              {% if r.status == 'pending' %}
+                <div style="display:flex;gap:6px;">
+                  <form method="POST" action="{{ url_for('admin_resolve_report', report_id=r.id) }}">
+                    <button type="submit" class="icon-btn btn-unban" title="Resolve"><i class="fa fa-check"></i></button>
+                  </form>
+                  <form method="POST" action="{{ url_for('admin_dismiss_report', report_id=r.id) }}">
+                    <button type="submit" class="icon-btn btn-ban" title="Dismiss"><i class="fa fa-xmark"></i></button>
+                  </form>
+                </div>
+              {% else %}
+                <span style="color:var(--text3);font-size:12px;">—</span>
+              {% endif %}
+            </td>
+          </tr>
+          {% endfor %}
+          {% if not reports_list %}
+          <tr><td colspan="5" class="empty-reports">
+            <i class="fa fa-flag"></i><p>No reports to show.</p>
+          </td></tr>
+          {% endif %}
+        </tbody>
+      </table>
+    {% endif %}
+
+  </div>
+</div>
+{% endblock %}

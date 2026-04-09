@@ -1,0 +1,287 @@
+{% extends "base.html" %}
+{% block title %}Chat | Pick&Take{% endblock %}
+{% block extra_css %}
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/chat.css') }}">
+  <style>
+    /* Make main-content fill remaining height for chat */
+    .main-content { display:flex; flex-direction:column; flex:1; overflow:hidden; padding:0; }
+  </style>
+{% endblock %}
+
+{% block content %}
+<div class="chat-container">
+
+  <!-- ── SIDEBAR ── -->
+  <div class="chat-sidebar">
+    <div class="sidebar-header">
+      <div style="display:flex;align-items:center;gap:10px;">
+        <a href="javascript:history.back()" style="color:var(--text3);font-size:16px;text-decoration:none;" title="Back">
+          <i class="fa fa-arrow-left"></i>
+        </a>
+        <h3 style="margin:0;">💬 Messages</h3>
+      </div>
+      <button class="new-chat-btn" onclick="toggleNewChat()" title="New conversation">
+        <i class="fa fa-pen-to-square"></i>
+      </button>
+    </div>
+
+    <!-- New chat user picker -->
+    <div id="newChatPanel" class="new-chat-panel hidden">
+      <p>Start a new conversation</p>
+      <ul class="user-list">
+        {% for u in users_list %}
+          <li>
+            <a href="{{ url_for('chat_with', other_user=u.name) }}">
+              <div class="avatar-sm">{{ u.name[0]|upper }}</div>
+              <span>{{ u.name }}</span>
+            </a>
+          </li>
+        {% else %}
+          <li style="padding:8px;color:rgba(255,255,255,0.4);font-size:13px;">No other users yet.</li>
+        {% endfor %}
+      </ul>
+    </div>
+
+    <!-- Conversation list -->
+    <ul class="convo-list">
+      {% for c in convos %}
+        <li class="convo-item {% if active_user == c.other_user %}active{% endif %}">
+          <a href="{{ url_for('chat_with', other_user=c.other_user) }}" class="convo-link">
+            <div class="avatar-sm">{{ c.other_user[0]|upper }}</div>
+            <span class="convo-name">{{ c.other_user }}</span>
+            {% if unread_map.get(c.other_user) %}
+              <span class="unread-badge">{{ unread_map[c.other_user] }}</span>
+            {% endif %}
+          </a>
+          <form method="POST" action="{{ url_for('delete_chat', other_user=c.other_user) }}"
+                onsubmit="return confirm('Delete this conversation?')">
+            <button type="submit" class="delete-chat-btn" title="Delete conversation">
+              <i class="fa fa-trash"></i>
+            </button>
+          </form>
+        </li>
+      {% else %}
+        <li class="no-convos">No conversations yet.<br>Click ✏️ to start one!</li>
+      {% endfor %}
+    </ul>
+  </div>
+
+  <!-- ── MAIN CHAT AREA ── -->
+  <div class="chat-main">
+    {% if active_user %}
+
+      <!-- Header -->
+      <div class="chat-header">
+        <div class="avatar-sm">{{ active_user[0]|upper }}</div>
+        <div>
+          <strong>{{ active_user }}</strong>
+          {% if other_info and other_info.college %}
+            <p>{{ other_info.college }}</p>
+          {% endif %}
+        </div>
+      </div>
+
+      <!-- Messages -->
+      <div class="messages-area" id="messagesArea">
+        {% for m in messages_list %}
+          <div class="msg-bubble {% if m.sender == my_name %}mine{% else %}theirs{% endif %}" data-msg-id="{{ m.id }}">
+            {% if m.file_type == 'image' and m.file_name %}
+              <img src="{{ m.file_name }}" alt="image"
+                   onclick="window.open(this.src,'_blank')">
+            {% elif m.file_type == 'pdf' and m.file_name %}
+              <a class="msg-pdf"
+                 href="/chat/download?url={{ m.file_name|urlencode }}&name=document.pdf"
+                 download="document.pdf">
+                <i class="fa fa-file-pdf"></i>
+                <div>
+                  <span class="msg-pdf-name">PDF File</span>
+                  <span class="msg-pdf-label">Tap to download</span>
+                </div>
+              </a>
+            {% endif %}
+            {% if m.body %}<p>{{ m.body }}</p>{% endif %}
+            <div class="msg-footer">
+              <span class="msg-time">{{ m.ts }}</span>
+              {% if m.sender == my_name %}
+                <button class="unsend-btn" onclick="unsendMsg({{ m.id }}, this)" title="Unsend">
+                  <i class="fa fa-trash"></i>
+                </button>
+              {% endif %}
+            </div>
+          </div>
+        {% endfor %}
+      </div>
+
+      <!-- Attachment preview area -->
+      <div id="attachPreview" class="attachment-preview" style="padding:0 20px;display:none;"></div>
+
+      <!-- Input -->
+      <div class="chat-input-area">
+        <div class="input-row">
+          <!-- Hidden file input -->
+          <input type="file" id="fileInput" accept="image/*,.pdf" style="display:none"
+                 onchange="handleFileSelect(this)">
+
+          <button class="attach-btn" onclick="document.getElementById('fileInput').click()"
+                  title="Attach image or PDF">
+            <i class="fa fa-paperclip"></i>
+          </button>
+
+          <input type="text" id="msgInput" placeholder="Type a message..."
+                 onkeydown="if(event.key==='Enter'&&!event.shiftKey){sendMsg();event.preventDefault();}">
+
+          <button class="send-btn" onclick="sendMsg()">
+            <i class="fa fa-paper-plane"></i>
+          </button>
+        </div>
+      </div>
+
+    {% else %}
+      <div class="chat-empty">
+        <i class="fa fa-comments"></i>
+        <p>Select a conversation or start a new one</p>
+      </div>
+    {% endif %}
+  </div>
+
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+  const ACTIVE_USER  = {{ ('"' + active_user + '"')|safe if active_user else 'null' }};
+  const MY_NAME      = {{ ('"' + my_name + '"')|safe if my_name is defined else '""' }};
+  let   lastId       = {{ messages_list[-1].id if messages_list else 0 }};
+  let   pendingFile  = null;   // {file, type, previewUrl}
+
+  // ── Scroll to bottom ──────────────────────────────────────────────────
+  function scrollBottom() {
+    const area = document.getElementById("messagesArea");
+    if (area) area.scrollTop = area.scrollHeight;
+  }
+  scrollBottom();
+
+  // ── New chat panel toggle ─────────────────────────────────────────────
+  function toggleNewChat() {
+    document.getElementById("newChatPanel").classList.toggle("hidden");
+  }
+
+  // ── Append a bubble to the messages area ─────────────────────────────
+  function appendBubble({ body="", file_name="", file_type="", ts="", mine=true, id=null }) {
+    const area = document.getElementById("messagesArea");
+    if (!area) return;
+    const div  = document.createElement("div");
+    div.className = "msg-bubble " + (mine ? "mine" : "theirs");
+    if (id) div.dataset.msgId = id;
+    let inner = "";
+    if (file_type === "image" && file_name) {
+      inner += `<img src="${file_name}" onclick="window.open(this.src,'_blank')">`;
+    } else if (file_type === "pdf" && file_name) {
+      const dlUrl = `/chat/download?url=${encodeURIComponent(file_name)}&name=document.pdf`;
+      inner += `<a class="msg-pdf" href="${dlUrl}" download="document.pdf">
+        <i class="fa fa-file-pdf"></i>
+        <div><span class="msg-pdf-name">PDF File</span>
+             <span class="msg-pdf-label">Tap to download</span></div></a>`;
+    }
+    if (body) inner += `<p>${body}</p>`;
+    const now = new Date();
+    const tStr = ts || now.getFullYear()+"-"+String(now.getMonth()+1).padStart(2,"0")+"-"+
+                 String(now.getDate()).padStart(2,"0")+" "+
+                 String(now.getHours()).padStart(2,"0")+":"+String(now.getMinutes()).padStart(2,"0");
+    inner += `<div class="msg-footer"><span class="msg-time">${tStr}</span>`;
+    if (mine) inner += `<button class="unsend-btn" onclick="unsendMsg(null, this)" title="Unsend"><i class="fa fa-trash"></i></button>`;
+    inner += `</div>`;
+    div.innerHTML = inner;
+    area.appendChild(div);
+    scrollBottom();
+  }
+
+  async function unsendMsg(id, btn) {
+    const bubble = btn.closest(".msg-bubble");
+    const msgId  = id || bubble?.dataset?.msgId;
+    if (!msgId) { bubble?.remove(); return; }
+    if (!confirm("Unsend this message?")) return;
+    const res = await fetch(`/chat/unsend/${msgId}`, { method: "POST" });
+    if (res.ok) {
+      bubble?.remove();
+    }
+  }
+
+  // ── File selection ────────────────────────────────────────────────────
+  function handleFileSelect(input) {
+    const file = input.files[0];
+    if (!file) return;
+    const ext  = file.name.split('.').pop().toLowerCase();
+    const type = ['png','jpg','jpeg','gif','webp'].includes(ext) ? 'image' : 'pdf';
+    const url  = type === 'image' ? URL.createObjectURL(file) : null;
+    pendingFile = { file, type, url };
+    // Show preview
+    const preview = document.getElementById("attachPreview");
+    preview.style.display = "flex";
+    preview.innerHTML = `
+      <div class="att-thumb">
+        ${type === 'image'
+          ? `<img src="${url}">`
+          : `<div class="att-pdf"><i class="fa fa-file-pdf"></i><span>PDF</span></div>`}
+        <button class="att-remove" onclick="clearAttachment()">✕</button>
+      </div>`;
+  }
+
+  function clearAttachment() {
+    pendingFile = null;
+    document.getElementById("attachPreview").style.display = "none";
+    document.getElementById("attachPreview").innerHTML = "";
+    document.getElementById("fileInput").value = "";
+  }
+
+  // ── Send message ──────────────────────────────────────────────────────
+  async function sendMsg() {
+    if (!ACTIVE_USER) return;
+    const input = document.getElementById("msgInput");
+    const body  = input.value.trim();
+    if (!body && !pendingFile) return;
+    input.value = "";
+
+    let file_name = "", file_type = "";
+
+    if (pendingFile) {
+      // Send as multipart
+      const fd = new FormData();
+      fd.append("recipient", ACTIVE_USER);
+      fd.append("body",      body);
+      fd.append("file",      pendingFile.file);
+      const res  = await fetch("/chat/send", { method:"POST", body:fd });
+      const data = await res.json();
+      file_name  = data.file_name || "";
+      file_type  = data.file_type || "";
+      clearAttachment();
+    } else {
+      // JSON text only
+      await fetch("/chat/send", {
+        method:"POST",
+        headers:{"Content-Type":"application/json"},
+        body:JSON.stringify({ recipient:ACTIVE_USER, body })
+      });
+    }
+
+    appendBubble({ body, file_name, file_type, mine:true });
+  }
+
+  // ── Poll for new messages every 3 s ──────────────────────────────────
+  if (ACTIVE_USER) {
+    setInterval(async () => {
+      try {
+        const res  = await fetch(`/chat/poll/${ACTIVE_USER}?since=${lastId}`);
+        const msgs = await res.json();
+        msgs.forEach(m => {
+          if (m.sender !== MY_NAME) {
+            appendBubble({ body:m.body, file_name:m.file_name||"",
+                           file_type:m.file_type||"", ts:m.ts, mine:false });
+          }
+          lastId = Math.max(lastId, m.id);
+        });
+      } catch(e) {}
+    }, 3000);
+  }
+</script>
+{% endblock %}

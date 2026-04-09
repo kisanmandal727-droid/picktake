@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Login | Pick&amp;Take</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/auth.css') }}">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+</head>
+<body>
+<div class="auth-container">
+  <div class="logo">📘 <span>Pick&amp;Take</span></div>
+
+  <div class="card">
+    <h2>Welcome Back!</h2>
+    <p class="subtitle">Sign in to continue to your account.</p>
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% for cat, msg in messages %}
+        <p class="flash-msg flash-{{ cat }}">{{ msg }}</p>
+      {% endfor %}
+    {% endwith %}
+
+    <form method="POST">
+      <label>Email</label>
+      <input type="email" name="email" placeholder="name@example.com" required>
+
+      <label>Password</label>
+      <div class="password-box">
+        <input type="password" name="password" id="pwd" required>
+        <button type="button" class="eye-btn" onclick="togglePwd()" tabindex="-1">
+          <i class="fa fa-eye" id="eyeIcon"></i>
+        </button>
+      </div>
+
+      <button class="btn" type="submit">Login</button>
+    </form>
+
+    <p class="switch">
+      Don't have an account? <a href="{{ url_for('signup') }}">Sign up</a>
+    </p>
+  </div>
+</div>
+
+<script>
+  function togglePwd() {
+    const p = document.getElementById("pwd");
+    const i = document.getElementById("eyeIcon");
+    if (p.type === "password") {
+      p.type = "text";
+      i.className = "fa fa-eye-slash";
+    } else {
+      p.type = "password";
+      i.className = "fa fa-eye";
+    }
+  }
+</script>
+</body>
+</html>

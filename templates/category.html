@@ -1,0 +1,50 @@
+{% extends "base.html" %}
+{% block title %}{{ category_name }} | Pick&Take{% endblock %}
+{% block extra_css %}
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/category.css') }}">
+{% endblock %}
+
+{% block content %}
+<div class="category-container">
+  <a href="{{ url_for('home') }}" class="back-link">
+    <i class="fa fa-arrow-left"></i> Back
+  </a>
+  <h2>{{ emoji }} {{ category_name }}</h2>
+  <p class="subtitle">All {{ category_name }} listings</p>
+
+  <div class="cards">
+    {% if not cat_listings %}
+      <p class="no-listings">
+        <i class="fa fa-box-open" style="font-size:38px;display:block;margin-bottom:10px;"></i>
+        No listings yet
+      </p>
+    {% endif %}
+    {% for l in cat_listings %}
+      <div class="card" data-id="{{ l.id }}"
+           onclick="location.href='{{ url_for('listing_detail', listing_id=l.id) }}'">
+        <div class="card-img">
+          {% if l.image %}
+            <img src="{{ l.image }}" alt="{{ l.title }}"
+                 onerror="this.src='https://placehold.co/300x175/eff6ff/2563eb?text=No+Image'">
+          {% else %}
+            <img src="https://placehold.co/300x175/eff6ff/2563eb?text=No+Image" alt="{{ l.title }}">
+          {% endif %}
+          <i class="fa fa-heart fav-icon {% if l.id in fav_ids %}active{% endif %}"
+             onclick="event.stopPropagation()"></i>
+          {% if l.sold %}<div class="sold-tag">SOLD</div>{% endif %}
+        </div>
+        <div class="card-body">
+          <span class="category-tag">{{ l.category }}</span>
+          <h3>{{ l.title }}</h3>
+          <p class="price">₹{{ l.price }}</p>
+          <p class="uploaded">by <a href="{{ url_for('public_profile', username=l.username) }}" onclick="event.stopPropagation()" style="color:var(--accent);text-decoration:none;font-weight:600;">{{ l.username }}</a></p>
+        </div>
+      </div>
+    {% endfor %}
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{{ url_for('static', filename='js/favourites.js') }}"></script>
+{% endblock %}

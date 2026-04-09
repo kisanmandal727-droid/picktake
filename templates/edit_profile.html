@@ -1,0 +1,109 @@
+{% extends "base.html" %}
+{% block title %}Edit Profile | Pick&Take{% endblock %}
+{% block extra_css %}
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/edit_profile.css') }}">
+{% endblock %}
+
+{% block content %}
+<div class="edit-profile-page">
+  <div class="edit-profile-container">
+    <a href="{{ url_for('profile') }}" class="back-link">
+      <i class="fa fa-arrow-left"></i> Back to Profile
+    </a>
+    <h2>Edit Profile</h2>
+    <p class="subtitle">Update your public profile information.</p>
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% for cat, msg in messages %}
+        <p class="flash-msg flash-{{ cat }}">{{ msg }}</p>
+      {% endfor %}
+    {% endwith %}
+
+    <form method="POST" enctype="multipart/form-data">
+
+      <!-- Avatar upload -->
+      <div class="avatar-upload">
+        {% if user.avatar %}
+          <img src="{{ user.avatar }}"
+               class="avatar-preview" id="previewImg"
+               onerror="this.style.display='none';document.getElementById('avatarInitial').style.display='flex'">
+          <div class="avatar-initial" id="avatarInitial" style="display:none">
+            {{ user.name[0]|upper if user.name else 'U' }}
+          </div>
+        {% else %}
+          <div class="avatar-initial" id="avatarInitial">
+            {{ user.name[0]|upper if user.name else 'U' }}
+          </div>
+          <img src="" class="avatar-preview" id="previewImg" style="display:none">
+        {% endif %}
+        <label for="avatarInput" class="avatar-change-btn">
+          <i class="fa fa-camera"></i> Change Photo
+        </label>
+        <input type="file" id="avatarInput" name="avatar" accept="image/*" hidden>
+      </div>
+
+      <div class="form-grid">
+        <div class="form-group">
+          <label>Name</label>
+          <input type="text" name="name" value="{{ user.name or '' }}" placeholder="Your full name">
+        </div>
+        <div class="form-group">
+          <label>Username</label>
+          <input type="text" name="username" value="{{ user.username or '' }}" placeholder="@username">
+        </div>
+        <div class="form-group">
+          <label>Email</label>
+          <input type="email" value="{{ email }}" disabled>
+        </div>
+        <div class="form-group">
+          <label>College <span style="font-size:11px;color:var(--text3);font-weight:400;">(permanent)</span></label>
+          <input type="text" value="{{ user.college or '—' }}" disabled
+                 style="opacity:0.6;cursor:not-allowed;background:var(--bg2);">
+        </div>
+        <div class="form-group full-width">
+          <label>Bio</label>
+          <textarea name="bio" rows="3" placeholder="Tell others about yourself...">{{ user.bio or '' }}</textarea>
+        </div>
+      </div>
+
+      <button type="submit" class="save-btn">
+        <i class="fa fa-check"></i> Save Changes
+      </button>
+    </form>
+
+    <!-- Delete Account -->
+    <div class="danger-zone">
+      <h3><i class="fa fa-triangle-exclamation"></i> Danger Zone</h3>
+      <p>Permanently delete your account, all listings, messages and data. This cannot be undone.</p>
+      <button class="delete-account-btn" onclick="confirmDelete()">
+        <i class="fa fa-trash"></i> Delete My Account
+      </button>
+    </div>
+  </div>
+</div>
+
+<script>
+  const avatarInput = document.getElementById("avatarInput");
+  const previewImg  = document.getElementById("previewImg");
+  const initial     = document.getElementById("avatarInitial");
+
+  avatarInput.addEventListener("change", function() {
+    if (this.files && this.files[0]) {
+      const url = URL.createObjectURL(this.files[0]);
+      previewImg.src = url;
+      previewImg.style.display = "block";
+      if (initial) initial.style.display = "none";
+    }
+  });
+
+  function confirmDelete() {
+    if (confirm("Are you sure you want to permanently delete your account? All your listings, messages and data will be removed. This cannot be undone.")) {
+      const form = document.createElement("form");
+      form.method = "POST";
+      form.action = "{{ url_for('delete_account') }}";
+      document.body.appendChild(form);
+      form.submit();
+    }
+  }
+</script>
+{% endblock %}

@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Sign Up | Pick&amp;Take</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/auth.css') }}">
+</head>
+<body>
+
+<div class="auth-container">
+  <div class="logo">📘 <span>Pick&amp;Take</span></div>
+
+  <div class="card">
+    <h2>Create an Account</h2>
+    <p class="subtitle">Enter your details to get started.</p>
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% for cat, msg in messages %}
+        <p class="flash-msg flash-{{ cat }}">{{ msg }}</p>
+      {% endfor %}
+    {% endwith %}
+
+    <form method="POST">
+      <label>College</label>
+      <select name="college">
+        <option value="">Select your college...</option>
+        {% for c in colleges %}
+          <option value="{{ c }}">{{ c }}</option>
+        {% endfor %}
+      </select>
+
+      <label>Email</label>
+      <input type="email" name="email" placeholder="name@example.com" required>
+
+      <label>Password</label>
+      <input type="password" name="password" required>
+
+      <label>Confirm Password</label>
+      <input type="password" name="confirm_password" required>
+
+      <button class="btn" type="submit">Sign Up</button>
+    </form>
+
+    <p class="switch">
+      Already have an account? <a href="{{ url_for('login') }}">Login</a>
+    </p>
+  </div>
+</div>
+
+</body>
+</html>

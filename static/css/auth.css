@@ -1,0 +1,74 @@
+* { box-sizing: border-box; font-family: 'Segoe UI', system-ui, sans-serif; }
+body {
+  margin: 0;
+  min-height: 100vh;
+  background: linear-gradient(135deg, #eff6ff 0%, #fff7ed 50%, #ecfdf5 100%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+.auth-container {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+.logo {
+  font-size: 26px;
+  font-weight: 800;
+  margin-bottom: 24px;
+  color: var(--accent, #2563eb);
+  letter-spacing: -0.5px;
+}
+.logo span { color: var(--orange, #f97316); }
+
+.card {
+  background: #fff;
+  width: 420px;
+  padding: 40px;
+  border-radius: 16px;
+  border: 1px solid #d1dce8;
+  box-shadow: 0 8px 40px rgba(0,0,0,0.1);
+}
+.card h2 { text-align: center; margin-bottom: 4px; color: #1a2535; font-weight: 700; }
+.subtitle { text-align: center; font-size: 14px; color: #7a8fa6; margin-bottom: 28px; }
+
+label { font-size: 13px; margin-top: 18px; display: block; color: #4a5568; font-weight: 500; }
+input, select {
+  width: 100%; padding: 12px 15px; margin-top: 6px;
+  border-radius: 8px; border: 1.5px solid #d1dce8;
+  background: #f7fafc; color: #1a2535; font-size: 14px; transition: all 0.2s;
+}
+input::placeholder { color: #a0b0c0; }
+input:focus, select:focus {
+  outline: none; border-color: #2563eb;
+  box-shadow: 0 0 0 3px rgba(37,99,235,0.12);
+  background: #fff;
+}
+select option { background: #fff; color: #1a2535; }
+
+.password-box { position: relative; }
+.eye-btn {
+  position: absolute; right: 12px; top: 50%;
+  transform: translateY(-50%);
+  background: none; border: none; cursor: pointer;
+  color: #a0b0c0; font-size: 15px; padding: 4px;
+  transition: color 0.2s; line-height: 1;
+}
+.eye-btn:hover { color: #2563eb; }
+
+.btn {
+  margin-top: 26px; width: 100%; padding: 13px;
+  background: #2563eb; border: none; border-radius: 8px;
+  font-size: 15px; font-weight: 600; cursor: pointer;
+  color: white; transition: all 0.2s;
+  box-shadow: 0 2px 8px rgba(37,99,235,0.25);
+}
+.btn:hover { background: #1d4ed8; transform: translateY(-1px); }
+
+.switch { text-align: center; font-size: 14px; margin-top: 22px; color: #7a8fa6; }
+.switch a { color: #2563eb; text-decoration: none; font-weight: 600; }
+.switch a:hover { text-decoration: underline; }

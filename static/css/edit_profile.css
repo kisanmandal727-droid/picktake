@@ -1,0 +1,123 @@
+.edit-profile-page {
+  flex: 1;
+  overflow-y: auto;
+  background: var(--bg);
+  padding: 36px 20px 60px;
+}
+
+.edit-profile-container {
+  max-width: 700px;
+  margin: 0 auto;
+  background: var(--surface);
+  padding: 36px 40px;
+  border-radius: 16px;
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow);
+}
+
+@media (max-width: 600px) {
+  .edit-profile-container { padding: 24px 20px; }
+}
+
+.back-link {
+  display: inline-flex; align-items: center; gap: 6px;
+  margin-bottom: 16px; color: var(--accent);
+  text-decoration: none; font-size: 14px; font-weight: 500;
+}
+.back-link:hover { opacity: 0.75; }
+
+.edit-profile-container h2 { color: var(--text); font-size: 22px; font-weight: 700; margin: 0 0 4px; }
+.subtitle { font-size: 14px; color: var(--text3); margin: 0 0 24px; }
+
+/* Avatar upload */
+.avatar-upload {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 28px;
+}
+.avatar-preview {
+  width: 100px; height: 100px; border-radius: 50%;
+  object-fit: cover; border: 3px solid #bfdbfe;
+  box-shadow: 0 4px 14px var(--accent-glow);
+}
+.avatar-initial {
+  width: 100px; height: 100px; border-radius: 50%;
+  background: var(--accent); color: #fff;
+  font-size: 38px; font-weight: 800;
+  display: flex; align-items: center; justify-content: center;
+  border: 3px solid #bfdbfe;
+  box-shadow: 0 4px 14px var(--accent-glow);
+}
+.avatar-change-btn {
+  display: inline-flex; align-items: center; gap: 7px;
+  background: var(--accent-light); color: var(--accent);
+  border: 1.5px solid #bfdbfe; border-radius: 8px;
+  padding: 8px 16px; font-size: 13px; font-weight: 600;
+  cursor: pointer; transition: all 0.2s;
+}
+.avatar-change-btn:hover { background: var(--accent); color: #fff; }
+
+/* Form grid */
+.form-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px 20px;
+  margin-bottom: 24px;
+}
+@media (max-width: 600px) { .form-grid { grid-template-columns: 1fr; } }
+
+.form-group { display: flex; flex-direction: column; }
+.form-group.full-width { grid-column: 1 / -1; }
+
+label { font-size: 13px; font-weight: 600; color: var(--text2); margin-bottom: 6px; }
+input, textarea {
+  padding: 11px 14px;
+  border-radius: 8px; border: 1.5px solid var(--border);
+  background: var(--surface2); color: var(--text);
+  font-size: 14px; transition: all 0.2s; box-sizing: border-box; width: 100%;
+}
+input::placeholder, textarea::placeholder { color: var(--text3); }
+input:focus, textarea:focus {
+  outline: none; border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-glow); background: #fff;
+}
+input:disabled { opacity: 0.5; cursor: not-allowed; }
+textarea { resize: vertical; min-height: 90px; font-family: inherit; }
+
+.save-btn {
+  width: 100%; padding: 13px;
+  background: var(--accent); border: none; color: #fff;
+  font-size: 15px; font-weight: 600; border-radius: 10px;
+  cursor: pointer; transition: all 0.2s;
+  box-shadow: 0 2px 8px var(--accent-glow);
+  display: flex; align-items: center; justify-content: center; gap: 8px;
+}
+.save-btn:hover { background: var(--accent2); transform: translateY(-1px); }
+
+/* Danger zone */
+.danger-zone {
+  margin-top: 36px;
+  padding: 20px;
+  background: var(--red-light);
+  border: 1.5px solid #fecaca;
+  border-radius: 12px;
+}
+.danger-zone h3 {
+  color: var(--red); font-size: 15px; font-weight: 700; margin: 0 0 6px;
+  display: flex; align-items: center; gap: 8px;
+}
+.danger-zone p { color: #b91c1c; font-size: 13px; margin: 0 0 14px; }
+.delete-account-btn {
+  padding: 10px 20px;
+  background: var(--red); color: #fff; border: none;
+  border-radius: 8px; font-size: 14px; font-weight: 600;
+  cursor: pointer; transition: all 0.2s;
+  display: inline-flex; align-items: center; gap: 7px;
+}
+.delete-account-btn:hover { background: #dc2626; transform: translateY(-1px); }
+
+.flash-msg { font-size: 13px; text-align: center; margin: 0 0 16px; padding: 10px 14px; border-radius: 8px; }
+.flash-msg.flash-error   { background: var(--red-light);   color: var(--red);   }
+.flash-msg.flash-success { background: var(--green-light);  color: var(--green); }

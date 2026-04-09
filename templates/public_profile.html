@@ -1,0 +1,103 @@
+{% extends "base.html" %}
+{% block title %}{{ user.name }} | Pick&Take{% endblock %}
+{% block extra_css %}
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/profile.css') }}">
+{% endblock %}
+
+{% block content %}
+<div class="profile-container">
+
+  <div class="profile-header">
+    {% if user.avatar %}
+      <img src="{{ user.avatar }}" class="profile-avatar-img"
+           onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
+      <div class="profile-avatar" style="display:none">{{ user.name[0]|upper }}</div>
+    {% else %}
+      <div class="profile-avatar">{{ user.name[0]|upper }}</div>
+    {% endif %}
+    <h2>{{ user.name }}</h2>
+    <p class="email">@{{ user.username }}</p>
+    <p class="college"><i class="fa fa-building"></i> {{ user.college or '—' }}</p>
+
+    <div class="stats">
+      <div><strong>{{ user_listings|length }}</strong><span>Posts</span></div>
+      <div><strong id="fcount">{{ follower_count }}</strong><span>Followers</span></div>
+      <div><strong>{{ following_count }}</strong><span>Following</span></div>
+    </div>
+
+    <p class="bio">{{ user.bio or 'No bio yet.' }}</p>
+
+    <div class="profile-btns" style="justify-content:center;margin-top:16px;">
+      {% if is_own %}
+        <a href="{{ url_for('edit_profile') }}" class="btn-edit">Edit Profile</a>
+      {% elif session.get('name') %}
+        <button class="btn-follow {% if is_following %}following{% endif %}"
+                id="followBtn" onclick="toggleFollow()">
+          {{ 'Following' if is_following else 'Follow' }}
+        </button>
+        <a href="{{ url_for('chat_with', other_user=user.name) }}" class="btn-chat">
+          <i class="fa fa-comments"></i> Message
+        </a>
+      {% endif %}
+    </div>
+  </div>
+
+  <!-- Listings -->
+  <h3 style="color:var(--text);font-size:17px;font-weight:700;margin:24px 0 14px;">
+    Listings by {{ user.name }}
+  </h3>
+
+  {% if user_listings %}
+    <div class="cards-grid">
+      {% for l in user_listings %}
+        <div class="card" data-id="{{ l.id }}"
+             onclick="location.href='{{ url_for('listing_detail', listing_id=l.id) }}'">
+          <div class="card-img">
+            {% if l.image %}
+              <img src="{{ l.image }}" alt="{{ l.title }}"
+                   onerror="this.src='https://placehold.co/300x175/eff6ff/2563eb?text=No+Image'">
+            {% else %}
+              <img src="https://placehold.co/300x175/eff6ff/2563eb?text=No+Image" alt="{{ l.title }}">
+            {% endif %}
+            <i class="fa fa-heart fav-icon {% if l.id in fav_ids %}active{% endif %}"
+               onclick="event.stopPropagation()"></i>
+            {% if l.sold %}<div class="sold-tag">SOLD</div>{% endif %}
+          </div>
+          <div class="card-body">
+            <span class="category-tag">{{ l.category }}</span>
+            <h3>{{ l.title }}</h3>
+            <p class="price">₹{{ l.price }}</p>
+          </div>
+        </div>
+      {% endfor %}
+    </div>
+  {% else %}
+    <div class="empty-state">
+      <i class="fa fa-box-open"></i>
+      <p>No listings yet.</p>
+    </div>
+  {% endif %}
+
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{{ url_for('static', filename='js/favourites.js') }}"></script>
+<script>
+async function toggleFollow() {
+  const btn = document.getElementById("followBtn");
+  const username = "{{ user.name }}";
+  const res  = await fetch(`/follow/${encodeURIComponent(username)}`, { method: "POST" });
+  const data = await res.json();
+  const fc   = document.getElementById("fcount");
+  if (data.action === "followed") {
+    btn.textContent = "Following";
+    btn.classList.add("following");
+  } else {
+    btn.textContent = "Follow";
+    btn.classList.remove("following");
+  }
+  if (fc) fc.textContent = data.followers;
+}
+</script>
+{% endblock %}

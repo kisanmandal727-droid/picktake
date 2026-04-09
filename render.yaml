@@ -1,0 +1,25 @@
+services:
+  - type: web
+    name: picktake
+    env: python
+    buildCommand: pip install -r requirements.txt
+    startCommand: gunicorn app:app
+    envVars:
+      - key: SECRET_KEY
+        generateValue: true
+      - key: DATABASE_URL
+        fromDatabase:
+          name: picktake-db
+          property: connectionString
+      - key: CLOUDINARY_CLOUD_NAME
+        value: dudaclmew
+      - key: CLOUDINARY_API_KEY
+        value: "879838742296838"
+      - key: CLOUDINARY_API_SECRET
+        value: V9Es_pvYu_ZrD7FXxWehIjYr924
+      - key: ADMIN_EMAIL
+        value: admin@picktake.com
+
+databases:
+  - name: picktake-db
+    plan: free

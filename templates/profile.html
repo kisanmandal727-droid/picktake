@@ -1,0 +1,205 @@
+{% extends "base.html" %}
+{% block title %}Profile | Pick&Take{% endblock %}
+{% block extra_css %}
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/profile.css') }}">
+{% endblock %}
+
+{% block content %}
+<div class="profile-container">
+  <a href="javascript:history.back()" class="back-link" style="display:inline-flex;align-items:center;gap:6px;color:var(--accent);text-decoration:none;font-size:14px;font-weight:500;margin-bottom:16px;">
+    <i class="fa fa-arrow-left"></i> Back
+  </a>
+
+  <!-- Profile card -->
+  <div class="profile-header">
+    {% if user.avatar %}
+      <img src="{{ user.avatar }}"
+           class="profile-avatar-img"
+           onerror="this.style.display='none';document.getElementById('avatarFallback').style.display='flex'">
+      <div class="profile-avatar" id="avatarFallback" style="display:none">{{ user.name[0]|upper if user.name else 'U' }}</div>
+    {% else %}
+      <div class="profile-avatar">{{ user.name[0]|upper if user.name else 'U' }}</div>
+    {% endif %}
+
+    <h2>{{ user.name or 'User' }}</h2>
+    <p class="email">{{ email }}</p>
+    <p class="college"><i class="fa fa-building"></i> {{ user.college or '—' }}</p>
+
+    <div class="stats">
+      <div><strong>{{ my_listings|length }}</strong><span>Posts</span></div>
+      <div class="stat-clickable" onclick="openModal('followers')">
+        <strong id="my-follower-count">{{ follower_count }}</strong><span>Followers</span>
+      </div>
+      <div class="stat-clickable" onclick="openModal('following')">
+        <strong id="my-following-count">{{ following_count }}</strong><span>Following</span>
+      </div>
+    </div>
+
+    <p class="bio">{{ user.bio or 'No bio yet.' }}</p>
+
+    <div class="profile-btns">
+      <a href="{{ url_for('edit_profile') }}" class="btn-edit">Edit Profile</a>
+      <a href="{{ url_for('logout') }}" class="btn-logout">Logout</a>
+    </div>
+  </div>
+
+  <!-- Tabs -->
+  <div class="tabs">
+    <div class="tab {% if tab != 'saved' %}active{% endif %}" onclick="switchTab('posts')">
+      <i class="fa fa-grid-2"></i> My Posts ({{ my_listings|length }})
+    </div>
+    <div class="tab {% if tab == 'saved' %}active{% endif %}" onclick="switchTab('saved')">
+      <i class="fa fa-heart"></i> Saved
+    </div>
+  </div>
+
+  <!-- MY POSTS -->
+  <div id="posts-panel" {% if tab == 'saved' %}style="display:none"{% endif %}>
+    {% if my_listings %}
+      <div class="cards-grid">
+        {% for l in my_listings %}
+          <div class="card" data-id="{{ l.id }}"
+               onclick="location.href='{{ url_for('listing_detail', listing_id=l.id) }}'">
+            <div class="card-img">
+              {% if l.image %}
+                <img src="{{ l.image }}" alt="{{ l.title }}"
+                     onerror="this.src='https://placehold.co/300x175/eff6ff/2563eb?text=No+Image'">
+              {% else %}
+                <img src="https://placehold.co/300x175/eff6ff/2563eb?text=No+Image" alt="{{ l.title }}">
+              {% endif %}
+              <i class="fa fa-heart fav-icon {% if l.id in fav_ids %}active{% endif %}"
+                 onclick="event.stopPropagation()"></i>
+              {% if l.sold %}<div class="sold-tag">SOLD</div>{% endif %}
+            </div>
+            <div class="card-body">
+              <span class="category-tag">{{ l.category }}</span>
+              <h3>{{ l.title }}</h3>
+              <p class="price">₹{{ l.price }}</p>
+              <p class="uploaded">by {{ l.username }}</p>
+            </div>
+          </div>
+        {% endfor %}
+      </div>
+    {% else %}
+      <div class="empty-state">
+        <i class="fa fa-box-open"></i>
+        <p>No posts yet. <a href="{{ url_for('post_listing') }}">Post your first listing →</a></p>
+      </div>
+    {% endif %}
+  </div>
+
+  <!-- SAVED -->
+  <div id="saved-panel" {% if tab != 'saved' %}style="display:none"{% endif %}>
+    <div id="saved-grid" class="cards-grid"></div>
+  </div>
+
+</div>
+
+<!-- Followers/Following Modal -->
+<div id="followModal" class="modal-overlay" onclick="closeModal()" style="display:none">
+  <div class="modal-box" onclick="event.stopPropagation()">
+    <div class="modal-header">
+      <h3 id="modalTitle">Followers</h3>
+      <button class="modal-close" onclick="closeModal()"><i class="fa fa-xmark"></i></button>
+    </div>
+    <div id="modalList" class="modal-user-list">
+      <div class="modal-loading"><i class="fa fa-spinner fa-spin"></i></div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+const ALL_LISTINGS = {{ listings_json|safe }};
+const MY_NAME = "{{ user.name }}";
+
+function switchTab(name) {
+  document.querySelectorAll(".tab").forEach(t => t.classList.remove("active"));
+  const idx = name === "posts" ? 0 : 1;
+  document.querySelectorAll(".tab")[idx].classList.add("active");
+  document.getElementById("posts-panel").style.display = name === "posts" ? "block" : "none";
+  document.getElementById("saved-panel").style.display = name === "saved" ? "block" : "none";
+  if (name === "saved") loadSaved();
+}
+
+async function loadSaved() {
+  const grid  = document.getElementById("saved-grid");
+  const panel = document.getElementById("saved-panel");
+  grid.innerHTML = "";
+  const res  = await fetch("/api/favourites");
+  const ids  = await res.json();
+  const list = ALL_LISTINGS.filter(l => ids.includes(l.id));
+  if (list.length === 0) {
+    panel.innerHTML = `<div class="empty-state"><i class="fa fa-heart"></i><p>No saved listings yet.</p></div>`;
+    return;
+  }
+  list.forEach(l => {
+    const imgSrc = l.image || `https://placehold.co/300x175/eff6ff/2563eb?text=No+Image`;
+    const div = document.createElement("div");
+    div.className = "card"; div.dataset.id = l.id;
+    div.onclick = () => location.href = `/listing/${l.id}`;
+    div.innerHTML = `
+      <div class="card-img">
+        <img src="${imgSrc}" onerror="this.src='https://placehold.co/300x175/eff6ff/2563eb?text=No+Image'">
+        <i class="fa fa-heart fav-icon active" onclick="event.stopPropagation()"></i>
+      </div>
+      <div class="card-body">
+        <span class="category-tag">${l.category}</span>
+        <h3>${l.title}</h3>
+        <p class="price">₹${l.price}</p>
+        <p class="uploaded">by ${l.username || l.user || ''}</p>
+      </div>`;
+    grid.appendChild(div);
+  });
+}
+
+{% if tab == 'saved' %}loadSaved();{% endif %}
+
+// Follow counts refresh
+async function refreshFollowCounts() {
+  const res  = await fetch("/api/my-follow-counts");
+  const data = await res.json();
+  const fc = document.getElementById("my-follower-count");
+  const fg = document.getElementById("my-following-count");
+  if (fc) fc.textContent = data.followers;
+  if (fg) fg.textContent = data.following;
+}
+document.addEventListener("visibilitychange", () => { if (!document.hidden) refreshFollowCounts(); });
+refreshFollowCounts();
+
+// Followers/Following modal
+async function openModal(type) {
+  const modal = document.getElementById("followModal");
+  const title = document.getElementById("modalTitle");
+  const list  = document.getElementById("modalList");
+  title.textContent = type === "followers" ? "Followers" : "Following";
+  list.innerHTML = `<div class="modal-loading"><i class="fa fa-spinner fa-spin"></i></div>`;
+  modal.style.display = "flex";
+
+  const url  = type === "followers" ? `/api/followers/${encodeURIComponent(MY_NAME)}`
+                                    : `/api/following/${encodeURIComponent(MY_NAME)}`;
+  const res  = await fetch(url);
+  const users = await res.json();
+
+  if (users.length === 0) {
+    list.innerHTML = `<p style="text-align:center;color:var(--text3);padding:30px 0;">Nobody yet.</p>`;
+    return;
+  }
+  list.innerHTML = users.map(u => `
+    <a href="/user/${encodeURIComponent(u.name)}" class="modal-user-row">
+      <div class="modal-avatar">${u.name[0].toUpperCase()}</div>
+      <div>
+        <strong>${u.name}</strong>
+        <p>@${u.username}</p>
+      </div>
+    </a>`).join("");
+}
+
+function closeModal() {
+  document.getElementById("followModal").style.display = "none";
+}
+document.addEventListener("keydown", e => { if (e.key === "Escape") closeModal(); });
+</script>
+<script src="{{ url_for('static', filename='js/favourites.js') }}"></script>
+{% endblock %}

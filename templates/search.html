@@ -1,0 +1,136 @@
+{% extends "base.html" %}
+{% block title %}Search "{{ q }}" | Pick&Take{% endblock %}
+{% block extra_css %}
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/home.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/search.css') }}">
+{% endblock %}
+
+{% block content %}
+<div class="search-results-page">
+
+  <form class="search-box" method="GET" action="{{ url_for('search_results') }}">
+    <input type="text" name="q" value="{{ q }}" placeholder="Search listings or users...">
+    <button type="submit"><i class="fa fa-search"></i></button>
+  </form>
+
+  <div class="results-container">
+    <h1 class="results-title">Search Results for "{{ q }}"</h1>
+    <p class="results-sub">Found {{ items|length }} item{{ 's' if items|length != 1 else '' }} and {{ users_found|length }} user{{ 's' if users_found|length != 1 else '' }}.</p>
+
+    <div class="search-tabs">
+      <button class="stab active" onclick="showTab('items', this)">Items ({{ items|length }})</button>
+      <button class="stab" onclick="showTab('users', this)">Users ({{ users_found|length }})</button>
+    </div>
+
+    <!-- Items -->
+    <div id="tab-items" class="stab-content">
+      {% if items %}
+        <div class="cards">
+          {% for l in items %}
+            <div class="card" data-id="{{ l.id }}"
+                 onclick="location.href='{{ url_for('listing_detail', listing_id=l.id) }}'">
+              <div class="card-img">
+                {% if l.image %}
+                  <img src="{{ l.image }}" alt="{{ l.title }}"
+                       onerror="this.src='https://placehold.co/300x175/eff6ff/2563eb?text=No+Image'">
+                {% else %}
+                  <img src="https://placehold.co/300x175/eff6ff/2563eb?text=No+Image" alt="{{ l.title }}">
+                {% endif %}
+                <i class="fa fa-heart fav-icon {% if l.id in fav_ids %}active{% endif %}"
+                   onclick="event.stopPropagation()"></i>
+                {% if l.sold %}<div class="sold-tag">SOLD</div>{% endif %}
+              </div>
+              <div class="card-body">
+                <span class="category-tag">{{ l.category }}</span>
+                <h3>{{ l.title }}</h3>
+                <p class="price">₹{{ l.price }}</p>
+                <p class="uploaded">by
+                  <a href="{{ url_for('public_profile', username=l.username) }}"
+                     onclick="event.stopPropagation()" style="color:var(--accent);text-decoration:none;font-weight:600;">
+                    {{ l.username }}
+                  </a>
+                </p>
+              </div>
+            </div>
+          {% endfor %}
+        </div>
+      {% else %}
+        <div class="no-results">
+          <i class="fa fa-box-open"></i>
+          <p>No items found for "{{ q }}"</p>
+        </div>
+      {% endif %}
+    </div>
+
+    <!-- Users -->
+    <div id="tab-users" class="stab-content" style="display:none">
+      {% if users_found %}
+        <div class="user-cards">
+          {% for u in users_found %}
+            <div class="user-card">
+              <!-- Clickable avatar + name → public profile -->
+              <a href="{{ url_for('public_profile', username=u.name) }}" class="user-card-link">
+                <div class="user-card-avatar">{{ u.name[0]|upper }}</div>
+                <h3>{{ u.name }}</h3>
+              </a>
+              <p class="user-username">@{{ u.username }}</p>
+              <p class="user-college"><i class="fa fa-building"></i> {{ u.college or '—' }}</p>
+              <p class="user-followers">
+                <span class="fcount" data-user="{{ u.name }}">— Followers</span>
+              </p>
+              {% if session.get('name') and session.get('name') != u.name %}
+                <button class="follow-btn {% if u.name in my_following %}following{% endif %}"
+                        data-user="{{ u.name }}" onclick="toggleFollow(this)">
+                  {{ 'Following' if u.name in my_following else 'Follow' }}
+                </button>
+              {% endif %}
+            </div>
+          {% endfor %}
+        </div>
+      {% else %}
+        <div class="no-results">
+          <i class="fa fa-users"></i>
+          <p>No users found for "{{ q }}"</p>
+        </div>
+      {% endif %}
+    </div>
+
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{{ url_for('static', filename='js/favourites.js') }}"></script>
+<script>
+function showTab(name, btn) {
+  document.querySelectorAll(".stab").forEach(b => b.classList.remove("active"));
+  document.querySelectorAll(".stab-content").forEach(c => c.style.display = "none");
+  btn.classList.add("active");
+  document.getElementById("tab-" + name).style.display = "block";
+}
+
+async function toggleFollow(btn) {
+  const username = btn.dataset.user;
+  const res  = await fetch(`/follow/${encodeURIComponent(username)}`, { method: "POST" });
+  const data = await res.json();
+  if (data.action === "followed") {
+    btn.textContent = "Following";
+    btn.classList.add("following");
+  } else {
+    btn.textContent = "Follow";
+    btn.classList.remove("following");
+  }
+  // Update count using data-user attribute (safe for names with spaces)
+  const fc = document.querySelector(`.fcount[data-user="${username}"]`);
+  if (fc) fc.textContent = data.followers + " Follower" + (data.followers !== 1 ? "s" : "");
+}
+
+// Load real follower counts on page load
+document.querySelectorAll(".fcount[data-user]").forEach(async el => {
+  const username = el.dataset.user;
+  const res  = await fetch(`/follow-count/${encodeURIComponent(username)}`);
+  const data = await res.json();
+  el.textContent = data.count + " Follower" + (data.count !== 1 ? "s" : "");
+});
+</script>
+{% endblock %}

@@ -180,10 +180,15 @@ def init_db():
         for sql in tables:
             cur.execute(sql)
         # Simple migrations
-        try:
-            cur.execute("ALTER TABLE listings ADD COLUMN downloads INTEGER DEFAULT 0")
-        except:
-            pass # Column likely already exists
+        if USE_POSTGRES:
+            # PostgreSQL supports IF NOT EXISTS for ADD COLUMN
+            cur.execute("ALTER TABLE listings ADD COLUMN IF NOT EXISTS downloads INTEGER DEFAULT 0")
+        else:
+            # SQLite doesn't, but won't abort the transaction on a caught error
+            try:
+                cur.execute("ALTER TABLE listings ADD COLUMN downloads INTEGER DEFAULT 0")
+            except:
+                pass # Column likely already exists
         # Seed admin user
         cur.execute("SELECT id FROM users WHERE email=%s", (ADMIN_EMAIL,))
         if not cur.fetchone():

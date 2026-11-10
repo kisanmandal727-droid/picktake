@@ -1,0 +1,131 @@
+/* Admin fills full screen */
+.admin-wrapper {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  background: var(--bg);
+}
+
+.admin-container {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  max-width: 100%;
+  min-height: calc(100vh - 64px - 57px);
+}
+
+.admin-header {
+  padding: 20px 32px 0;
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+}
+.admin-header h1 {
+  color: var(--text);
+  font-size: 26px;
+  font-weight: 800;
+  margin: 0 0 16px;
+}
+
+/* Tabs */
+.admin-tabs {
+  display: flex;
+  gap: 0;
+}
+.admin-tab {
+  padding: 12px 24px;
+  color: var(--text3);
+  text-decoration: none;
+  font-size: 14px;
+  font-weight: 500;
+  border-bottom: 3px solid transparent;
+  transition: all 0.2s;
+  white-space: nowrap;
+}
+.admin-tab:hover { color: var(--accent); }
+.admin-tab.active {
+  color: var(--accent);
+  border-bottom-color: var(--accent);
+  font-weight: 700;
+}
+
+/* Scrollable panel */
+.admin-panel {
+  flex: 1;
+  overflow-y: auto;
+  padding: 28px 32px;
+}
+.admin-panel h2 { color: var(--text); font-size: 18px; font-weight: 700; margin: 0 0 4px; }
+.panel-sub { color: var(--text3); font-size: 13px; margin: 0 0 24px; }
+
+/* Table */
+.admin-table { width: 100%; border-collapse: collapse; font-size: 14px; }
+.admin-table thead th {
+  text-align: left; color: var(--text3); font-weight: 600;
+  padding: 10px 16px; border-bottom: 1px solid var(--border);
+  font-size: 12px; text-transform: uppercase; letter-spacing: 0.5px;
+  background: var(--surface2);
+}
+.admin-table tbody tr { border-bottom: 1px solid var(--border); transition: background 0.15s; }
+.admin-table tbody tr:hover { background: var(--bg2); }
+.admin-table tbody tr:last-child { border-bottom: none; }
+.admin-table td { padding: 14px 16px; color: var(--text2); vertical-align: middle; }
+.banned-row td { opacity: 0.45; }
+
+/* User cell */
+.user-cell { display: flex; align-items: center; gap: 12px; }
+.user-cell strong { color: var(--text); font-size: 14px; display: block; }
+.user-cell p { color: var(--text3); font-size: 12px; margin: 0; }
+.table-avatar {
+  width: 38px; height: 38px; border-radius: 50%;
+  background: var(--accent); color: #fff;
+  font-weight: 700; font-size: 15px;
+  display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+}
+
+/* Listing cell */
+.listing-cell { display: flex; align-items: center; gap: 14px; }
+.listing-cell strong { color: var(--text); font-size: 14px; }
+.listing-cell p { color: var(--text3); font-size: 12px; margin: 2px 0 0; }
+.listing-thumb { width: 58px; height: 46px; object-fit: cover; border-radius: 7px; border: 1px solid var(--border); flex-shrink: 0; }
+.listing-thumb-placeholder {
+  width: 58px; height: 46px; display: flex; align-items: center; justify-content: center;
+  background: var(--surface2); border-radius: 7px; font-size: 20px; flex-shrink: 0;
+  border: 1px solid var(--border);
+}
+
+/* Badges */
+.status-badge {
+  padding: 3px 12px; border-radius: 20px;
+  font-size: 11px; font-weight: 700; letter-spacing: 0.3px; display: inline-block;
+}
+.badge-available { background: var(--green-light); color: var(--green); border: 1px solid #a7f3d0; }
+.badge-sold      { background: var(--red-light);   color: var(--red);   border: 1px solid #fecaca; }
+.badge-pending   { background: #fff7ed; color: var(--orange); border: 1px solid #fed7aa; }
+.badge-dismissed { background: var(--bg2); color: var(--text3); border: 1px solid var(--border); }
+
+/* Icon buttons */
+.icon-btn {
+  width: 32px; height: 32px; border: none; border-radius: 7px;
+  cursor: pointer; display: flex; align-items: center; justify-content: center;
+  font-size: 13px; transition: all 0.2s;
+}
+.btn-ban   { background: var(--red-light);   color: var(--red);   }
+.btn-ban:hover   { background: var(--red); color: #fff; }
+.btn-unban { background: var(--green-light); color: var(--green); }
+.btn-unban:hover { background: var(--green); color: #fff; }
+
+/* Empty */
+.empty-reports { text-align: center; padding: 50px; color: var(--text3); }
+.empty-reports i { font-size: 36px; display: block; margin-bottom: 10px; }
+.empty-reports p { font-size: 14px; margin: 0; }
+
+@media (max-width: 768px) {
+  .admin-header { padding: 14px 16px 0; }
+  .admin-panel { padding: 16px; }
+  .admin-table { font-size: 12px; }
+  .admin-table td, .admin-table th { padding: 10px 8px; }
+  .listing-cell, .user-cell { gap: 8px; }
+}

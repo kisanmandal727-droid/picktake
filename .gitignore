@@ -1,0 +1,22 @@
+# Secrets and local configuration
+.env
+.env.*
+!.env.example
+
+# Local database and uploaded files
+*.db
+static/uploads/
+scratch/
+
+# Python artifacts
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+
+# Local tooling and logs
+.pytest_cache/
+.coverage
+*.log
+.DS_Store
+Thumbs.db
